@@ -13,3 +13,4 @@
     - discovery
     - etherpad
     - { role: netdata, tags: [monitoring] }
+    - { role: node_exporter, tags: [monitoring] }

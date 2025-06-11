@@ -1,0 +1,58 @@
+- name: Ensure monitoring network exists
+  docker_network:
+    name: monitoring_net
+    driver: bridge
+    state: present
+
+- name: Create textfile collector directory
+  file:
+    path: /var/lib/node_exporter/textfile_collector
+    state: directory
+    mode: "0755"
+
+- name: Install batman metrics script
+  copy:
+    dest: /usr/local/bin/batman_metrics.sh
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      METRICS="/var/lib/node_exporter/textfile_collector/batman.prom"
+
+      echo "# HELP batman_originators Number of originators in mesh" > "$METRICS"
+      echo "# TYPE batman_originators gauge" >> "$METRICS"
+      count=$(batctl o | grep -c ' \\[' || echo 0)
+      echo "batman_originators $count" >> "$METRICS"
+
+      echo "# HELP batman_neighbors Number of mesh neighbours" >> "$METRICS"
+      echo "# TYPE batman_neighbors gauge" >> "$METRICS"
+      neighbours=$(batctl n | grep -c ' \\[' || echo 0)
+      echo "batman_neighbors $neighbours" >> "$METRICS"
+
+- name: Add cron job to update batman metrics
+  cron:
+    name: "update batman metrics"
+    user: root
+    job: "/usr/local/bin/batman_metrics.sh"
+    minute: "*/1"
+
+- name: Run node_exporter container
+  docker_container:
+    name: node_exporter
+    image: prom/node-exporter:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /var/lib/node_exporter/textfile_collector:/textfile_collector
+    command: >
+      --path.procfs=/host/proc
+      --path.sysfs=/host/sys
+      --collector.filesystem.ignored-mount-points="^/(dev|proc|sys|var/lib/docker/.+)($|/)"
+      --collector.textfile.directory=/textfile_collector
+    networks:
+      - name: monitoring_net
+  tags: [monitoring, node_exporter]
