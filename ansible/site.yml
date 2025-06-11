@@ -2,5 +2,11 @@
   hosts: mesh_nodes
   become: true
 
+  vars:
+    mesh_ssid: "mesh-net"
+    mesh_channel: 1
+    mesh_ip_prefix: "192.168.77"
+
   roles:
     - base
+    - mesh

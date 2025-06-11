@@ -1,0 +1,123 @@
+- name: Get MAC address of wlan0
+  command: cat /sys/class/net/wlan0/address
+  register: wlan0_mac
+  changed_when: false
+
+- name: Generate last octet of mesh IP
+  set_fact:
+    mesh_ip_last_octet: "{{ wlan0_mac.stdout.split(':')[-1] | int(base=16) }}"
+
+- name: Set full mesh IP
+  set_fact:
+    mesh_ip: "{{ mesh_ip_prefix }}.{{ mesh_ip_last_octet }}"
+
+- name: Ensure wlan0 is in IBSS (mesh) mode
+  block:
+    - name: Bring down wlan0
+      command: ip link set wlan0 down
+      ignore_errors: true
+
+    - name: Set wlan0 to ibss mode
+      command: iw wlan0 set type ibss
+
+    - name: Bring up wlan0
+      command: ip link set wlan0 up
+
+    - name: Join wlan0 to mesh-net
+      shell: |
+        iw dev wlan0 info | grep -q "ssid {{ mesh_ssid }}" || \
+        iw wlan0 ibss join {{ mesh_ssid }} {{ (mesh_channel | int) * 5 + 2407 }}
+      changed_when: false
+
+- name: Load batman-adv kernel module
+  modprobe:
+    name: batman-adv
+    state: present
+
+- name: Add wlan0 to batman-adv
+  command: batctl if add wlan0
+  ignore_errors: true
+
+- name: Bring up bat0
+  command: ip link set up dev bat0
+
+- name: Ensure mesh IP is assigned to bat0
+  shell: |
+    ip addr show dev bat0 | grep -q '{{ mesh_ip }}/24' || ip addr add {{ mesh_ip }}/24 dev bat0
+  changed_when: false
+
+- name: Disable interfering services
+  systemd:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop:
+    - wpa_supplicant
+    - NetworkManager
+
+- name: Ensure interface {{ item }} is up and has a DHCP lease
+  shell: |
+    ip addr show dev {{ item }} | grep -q "inet " || \
+    (ip link set {{ item }} up && dhclient {{ item }})
+  loop: "{{ mesh_dhcp_interfaces.split(',') }}"
+  changed_when: false
+
+- name: Report assigned global IPs
+  command: ip -4 addr show scope global
+  register: ip_report
+  changed_when: false
+
+- name: Show IP assignments
+  debug:
+    var: ip_report.stdout_lines
+
+- name: Write systemd unit file for mesh startup
+  copy:
+    dest: /etc/systemd/system/mesh-startup.service
+    content: |
+      [Unit]
+      Description=Start mesh networking on boot
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/bin/bash -c '/usr/bin/ip link set wlan0 down && /usr/sbin/iw wlan0 set type ibss && /usr/bin/ip link set wlan0 up && iw wlan0 ibss join {{ mesh_ssid }} {{ (mesh_channel | int) * 5 + 2407 }} && modprobe batman-adv && batctl if add wlan0 && ip link set up dev bat0 && ip addr flush dev bat0 && ip addr add {{ mesh_ip }}/24 dev bat0 && systemctl disable --now wpa_supplicant && systemctl disable --now NetworkManager'
+      RemainAfterExit=true
+      Restart=on-failure
+      RestartSec=5
+      SuccessExitStatus=0
+      StandardOutput=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Enable mesh-startup service
+  systemd:
+    name: mesh-startup.service
+    enabled: yes
+    daemon_reload: yes
+
+- name: Write systemd unit file to bring up eth0 with DHCP
+  copy:
+    dest: /etc/systemd/system/eth0-dhcp.service
+    content: |
+      [Unit]
+      Description=Ensure eth0 is up and has DHCP
+      After=network.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/sbin/ip link set eth0 up
+      ExecStart=/sbin/dhclient eth0
+      RemainAfterExit=true
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+
+- name: Enable eth0-dhcp service
+  systemd:
+    name: eth0-dhcp.service
+    enabled: true
+    daemon_reload: yes
