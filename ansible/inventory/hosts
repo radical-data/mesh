@@ -1,7 +1,10 @@
 [mesh_nodes]
-node0.local ansible_user=pi
-node1.local ansible_user=pi
+node0.local
+node1.local
 
-[mesh_nodes:vars]
-mesh_ip_prefix=192.168.77
-mesh_dhcp_interfaces=eth0
+[service_nodes]
+node0.local
+node1.local
+
+[all:vars]
+ansible_user=pi

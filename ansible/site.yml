@@ -1,16 +1,13 @@
-- name: Bootstrap a mesh node
+- name: Bootstrap mesh nodes
   hosts: mesh_nodes
   become: true
-
-  vars:
-    mesh_ssid: "mesh-net"
-    mesh_channel: 1
-    mesh_ip_prefix: "192.168.77"
 
   roles:
     - base
     - mesh
     - discovery
-    - etherpad
-    - { role: netdata, tags: [monitoring] }
-    - { role: node_exporter, tags: [monitoring] }
+    - {
+        role: services,
+        when: "'service_nodes' in group_names",
+        tags: ["services"],
+      }
