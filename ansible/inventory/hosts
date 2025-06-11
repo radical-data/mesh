@@ -1,0 +1,3 @@
+[mesh_nodes]
+node0.local ansible_user=pi
+node1.local ansible_user=pi

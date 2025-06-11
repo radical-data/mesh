@@ -1,0 +1,6 @@
+- name: Bootstrap a mesh node
+  hosts: mesh_nodes
+  become: true
+
+  roles:
+    - base
