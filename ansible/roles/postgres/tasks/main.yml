@@ -1,0 +1,18 @@
+- name: Create persistent volume for Postgres
+  docker_volume:
+    name: "{{ postgres_volume }}"
+
+- name: Run Postgres container
+  docker_container:
+    name: "{{ postgres_container_name }}"
+    image: "{{ postgres_image }}"
+    state: started
+    restart_policy: always
+    env:
+      POSTGRES_DB: "{{ postgres_db }}"
+      POSTGRES_USER: "{{ postgres_user }}"
+      POSTGRES_PASSWORD: "{{ postgres_password }}"
+    volumes:
+      - "{{ postgres_volume }}:/var/lib/postgresql/data"
+    networks:
+      - name: "{{ postgres_network }}"

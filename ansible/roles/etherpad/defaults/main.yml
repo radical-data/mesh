@@ -1,0 +1,9 @@
+etherpad_port: 9001
+etherpad_admin_password: admin
+etherpad_default_pad_text: "Welcome to Etherpad!"
+
+# Postgres config needed to connect
+postgres_container_name: postgres
+postgres_db: etherpad
+postgres_user: admin
+postgres_password: admin

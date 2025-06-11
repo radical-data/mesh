@@ -1,0 +1,7 @@
+postgres_db: etherpad
+postgres_user: admin
+postgres_password: admin
+postgres_volume: postgres_data
+postgres_container_name: postgres
+postgres_image: postgres:15-alpine
+postgres_network: bridge

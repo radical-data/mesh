@@ -1,0 +1,53 @@
+- name: Ensure Docker is installed (optional)
+  include_role:
+    name: docker
+  when: install_docker | default(true)
+
+- name: Create persistent volume for Etherpad
+  docker_volume:
+    name: etherpad_var
+  tags: [etherpad, docker]
+
+- name: Create Docker network for Etherpad
+  docker_network:
+    name: etherpad_net
+    state: present
+  tags: [etherpad, docker]
+
+- name: Include Postgres setup
+  include_role:
+    name: postgres
+  vars:
+    postgres_network: etherpad_net
+
+- name: Run Etherpad container
+  docker_container:
+    name: etherpad
+    image: etherpad/etherpad:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ etherpad_port | default(9001) }}:9001"
+    env:
+      ADMIN_PASSWORD: "{{ etherpad_admin_password }}"
+      DEFAULT_PAD_TEXT: "{{ etherpad_default_pad_text }}"
+      DB_TYPE: "postgres"
+      DB_HOST: "{{ postgres_container_name }}"
+      DB_PORT: "5432"
+      DB_NAME: "{{ postgres_db }}"
+      DB_USER: "{{ postgres_user }}"
+      DB_PASS: "{{ postgres_password }}"
+    volumes:
+      - etherpad_var:/opt/etherpad-lite/var
+    networks:
+      - name: etherpad_net
+    recreate: yes
+  tags: [etherpad, docker]
+
+- name: Register Etherpad in Avahi
+  template:
+    src: avahi/etherpad.service.j2
+    dest: /etc/avahi/services/etherpad.service
+    mode: "0644"
+  notify: Restart avahi
+  tags: [etherpad, avahi, service-discovery]

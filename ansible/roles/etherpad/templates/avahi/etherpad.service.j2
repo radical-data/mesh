@@ -1,0 +1,10 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">Etherpad on {{ ansible_hostname }}</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>{{ etherpad_port | default(9001) }}</port>
+    <txt-record>path=/</txt-record>
+  </service>
+</service-group>
