@@ -1,0 +1,5 @@
+- name: Restart netdata
+  docker_container:
+    name: netdata
+    state: started
+    restart: true

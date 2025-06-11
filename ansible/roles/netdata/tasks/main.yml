@@ -1,0 +1,63 @@
+- name: Ensure Netdata config directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /etc/netdata
+    - /var/lib/netdata/cloud.d
+    - /var/lib/netdata
+    - /var/cache/netdata
+
+- name: Disable Netdata Cloud
+  copy:
+    dest: /var/lib/netdata/cloud.d/cloud.conf
+    content: |
+      [global]
+      enabled = no
+    mode: "0644"
+  notify: Restart netdata
+
+- name: Ensure netdata.conf exists
+  file:
+    path: /etc/netdata/netdata.conf
+    state: touch
+    mode: "0644"
+
+- name: Disable anonymous telemetry
+  lineinfile:
+    path: /etc/netdata/netdata.conf
+    regexp: "^send anonymous statistics"
+    line: "send anonymous statistics = no"
+    insertafter: '^\[global\]'
+  notify: Restart netdata
+
+- name: Run Netdata container
+  docker_container:
+    name: netdata
+    image: netdata/netdata:stable
+    state: started
+    restart_policy: unless-stopped
+    pid_mode: host
+    network_mode: host
+    env:
+      NETDATA_DISABLE_CLOUD: "1"
+    capabilities:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opts:
+      - apparmor=unconfined
+    volumes:
+      - /etc/netdata:/etc/netdata
+      - /var/lib/netdata:/var/lib/netdata
+      - /var/cache/netdata:/var/cache/netdata
+      - /:/host/root:ro,rslave
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - /var/log:/host/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+  tags: [monitoring, netdata]

@@ -12,3 +12,4 @@
     - mesh
     - discovery
     - etherpad
+    - { role: netdata, tags: [monitoring] }
