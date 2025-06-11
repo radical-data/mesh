@@ -6,5 +6,8 @@ node1.local
 node0.local
 node1.local
 
+[access_point_nodes]
+node0.local
+
 [all:vars]
 ansible_user=pi

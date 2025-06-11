@@ -11,3 +11,8 @@
         when: "'service_nodes' in group_names",
         tags: ["services"],
       }
+    - {
+        role: access_point,
+        when: "'access_point_nodes' in group_names",
+        tags: ["ap"],
+      }
