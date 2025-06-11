@@ -1,0 +1,7 @@
+packages:
+  - docs
+  - mesh-home
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
