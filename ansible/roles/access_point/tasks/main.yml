@@ -1,0 +1,103 @@
+---
+- name: Install AP and DHCP packages
+  apt:
+    name:
+      - hostapd
+      - dnsmasq
+      - bridge-utils
+    state: present
+    update_cache: yes
+
+- name: Ensure wlan1 exists
+  command: ip link show {{ wifi_ap_interface }}
+  register: wlan1_status
+  changed_when: false
+  failed_when: wlan1_status.rc != 0
+
+- name: Unblock Wi-Fi radios (rfkill)
+  command: rfkill unblock all
+
+- name: Stop interfering services
+  systemd:
+    name: wpa_supplicant
+    enabled: false
+    state: stopped
+
+- name: Set {{ wifi_ap_interface }} to AP mode
+  shell: |
+    ip link set {{ wifi_ap_interface }} down
+    iw dev {{ wifi_ap_interface }} set type __ap
+    ip link set {{ wifi_ap_interface }} up
+
+- name: Create bridge interface
+  command: brctl addbr {{ wifi_bridge }}
+  args:
+    creates: "/sys/class/net/{{ wifi_bridge }}"
+
+- name: Add {{ wifi_ap_interface }} to bridge
+  shell: |
+    brctl show {{ wifi_bridge }} | grep -q {{ wifi_ap_interface }} || brctl addif {{ wifi_bridge }} {{ wifi_ap_interface }}
+  changed_when: false
+
+- name: Add bat0 to bridge
+  shell: |
+    brctl show {{ wifi_bridge }} | grep -q bat0 || brctl addif {{ wifi_bridge }} bat0
+  changed_when: false
+
+- name: Bring up bridge and interfaces
+  shell: |
+    ip link set {{ wifi_ap_interface }} up
+    ip link set bat0 up
+    ip link set {{ wifi_bridge }} up
+
+- name: Assign static IP to bridge
+  shell: |
+    ip addr show {{ wifi_bridge }} | grep -q '{{ wifi_bridge_ip }}/24' || ip addr add {{ wifi_bridge_ip }}/24 dev {{ wifi_bridge }}
+  changed_when: true
+
+- name: Configure hostapd
+  copy:
+    dest: /etc/hostapd/hostapd.conf
+    content: |
+      interface={{ wifi_ap_interface }}
+      ssid={{ wifi_ap_ssid }}
+      hw_mode=g
+      channel={{ wifi_ap_channel }}
+      macaddr_acl=0
+      auth_algs=1
+      ignore_broadcast_ssid=0
+    mode: "0644"
+
+- name: Set hostapd default config path
+  lineinfile:
+    path: /etc/default/hostapd
+    regexp: "^DAEMON_CONF="
+    line: 'DAEMON_CONF="/etc/hostapd/hostapd.conf"'
+
+- name: Unmask hostapd
+  systemd:
+    name: hostapd
+    masked: no
+
+- name: Enable and start hostapd
+  systemd:
+    name: hostapd
+    enabled: true
+    state: restarted
+
+- name: Configure dnsmasq
+  copy:
+    dest: /etc/dnsmasq.d/ap.conf
+    content: |
+      interface={{ wifi_bridge }}
+      dhcp-range={{ wifi_dhcp_range_start }},{{ wifi_dhcp_range_end }},255.255.255.0,12h
+      domain-needed
+      bogus-priv
+    mode: "0644"
+  notify: Restart dnsmasq
+
+- name: Ensure dnsmasq is enabled and started
+  systemd:
+    name: dnsmasq
+    enabled: true
+    state: started

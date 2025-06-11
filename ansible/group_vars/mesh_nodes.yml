@@ -1,0 +1,4 @@
+mesh_ssid: "mesh-net"
+mesh_channel: 1
+mesh_ip_prefix: "192.168.77"
+mesh_dhcp_interfaces: eth0
