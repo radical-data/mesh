@@ -10,3 +10,4 @@
   roles:
     - base
     - mesh
+    - discovery

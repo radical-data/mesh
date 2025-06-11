@@ -1,0 +1,4 @@
+- name: Restart avahi
+  systemd:
+    name: avahi-daemon
+    state: restarted
