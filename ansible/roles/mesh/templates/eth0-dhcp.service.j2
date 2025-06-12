@@ -1,0 +1,12 @@
+[Unit]
+Description=Ensure eth0 is up and has DHCP
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set eth0 up
+ExecStart=/sbin/dhclient eth0
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

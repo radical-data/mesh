@@ -1,0 +1,16 @@
+[Unit]
+Description=Start mesh networking on boot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c '/usr/bin/ip link set wlan0 down && /usr/sbin/iw wlan0 set type ibss && /usr/bin/ip link set wlan0 up && iw wlan0 ibss join {{ mesh_ssid }} {{ (mesh_channel | int) * 5 + 2407 }} && modprobe batman-adv && batctl if add wlan0 && ip link set up dev bat0 && ip addr flush dev bat0 && ip addr add {{ mesh_ip }}/24 dev bat0 && systemctl disable --now wpa_supplicant && systemctl disable --now NetworkManager'
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=0
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
