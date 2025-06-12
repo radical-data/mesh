@@ -8,13 +8,13 @@
     state: present
     update_cache: yes
 
-- name: Ensure wlan1 exists
+- name: Ensure {{ wifi_ap_interface }} exists
   command: ip link show {{ wifi_ap_interface }}
   register: wlan1_status
   changed_when: false
   failed_when: wlan1_status.rc != 0
 
-- name: Unblock Wi-Fi radios (rfkill)
+- name: Unblock Wi-Fi radios
   command: rfkill unblock all
 
 - name: Stop interfering services
@@ -29,20 +29,30 @@
     iw dev {{ wifi_ap_interface }} set type __ap
     ip link set {{ wifi_ap_interface }} up
 
-- name: Create bridge interface
+- name: Ensure bridge interface exists
   command: brctl addbr {{ wifi_bridge }}
   args:
     creates: "/sys/class/net/{{ wifi_bridge }}"
 
+- name: Check if {{ wifi_ap_interface }} is already in bridge
+  shell: brctl show {{ wifi_bridge }} | grep -q {{ wifi_ap_interface }}
+  register: wlan_bridge_check
+  ignore_errors: true
+  changed_when: false
+
 - name: Add {{ wifi_ap_interface }} to bridge
-  shell: |
-    brctl show {{ wifi_bridge }} | grep -q {{ wifi_ap_interface }} || brctl addif {{ wifi_bridge }} {{ wifi_ap_interface }}
+  command: brctl addif {{ wifi_bridge }} {{ wifi_ap_interface }}
+  when: wlan_bridge_check.rc != 0
+
+- name: Check if bat0 is already in bridge
+  shell: brctl show {{ wifi_bridge }} | grep -q bat0
+  register: bat_bridge_check
+  ignore_errors: true
   changed_when: false
 
 - name: Add bat0 to bridge
-  shell: |
-    brctl show {{ wifi_bridge }} | grep -q bat0 || brctl addif {{ wifi_bridge }} bat0
-  changed_when: false
+  command: brctl addif {{ wifi_bridge }} bat0
+  when: bat_bridge_check.rc != 0
 
 - name: Bring up bridge and interfaces
   shell: |
@@ -50,10 +60,32 @@
     ip link set bat0 up
     ip link set {{ wifi_bridge }} up
 
+- name: Flush previous IPs from bridge
+  shell: ip addr flush dev {{ wifi_bridge }}
+  when: wifi_bridge in ansible_interfaces
+
 - name: Assign static IP to bridge
-  shell: |
-    ip addr show {{ wifi_bridge }} | grep -q '{{ wifi_bridge_ip }}/24' || ip addr add {{ wifi_bridge_ip }}/24 dev {{ wifi_bridge }}
+  shell: ip addr add {{ wifi_bridge_ip }}/23 dev {{ wifi_bridge }}
+  register: bridge_ip_result
   changed_when: true
+
+- name: Install bridge startup script
+  template:
+    src: bridge-ap.sh.j2
+    dest: /usr/local/sbin/bridge-ap.sh
+    mode: "0755"
+
+- name: Install systemd unit to persist bridge on boot
+  template:
+    src: bridge-ap.service.j2
+    dest: /etc/systemd/system/bridge-ap.service
+    mode: "0644"
+
+- name: Enable systemd bridge service
+  systemd:
+    name: bridge-ap.service
+    enabled: true
+    daemon_reload: true
 
 - name: Configure hostapd
   copy:
@@ -90,7 +122,7 @@
     dest: /etc/dnsmasq.d/ap.conf
     content: |
       interface={{ wifi_bridge }}
-      dhcp-range={{ wifi_dhcp_range_start }},{{ wifi_dhcp_range_end }},255.255.255.0,12h
+      dhcp-range={{ wifi_dhcp_range_start }},{{ wifi_dhcp_range_end }},255.255.254.0,12h
       domain-needed
       bogus-priv
     mode: "0644"
@@ -101,3 +133,4 @@
     name: dnsmasq
     enabled: true
     state: started
+  notify: Restart dnsmasq

@@ -1,8 +1,4 @@
-wifi_ap_interface: wlan1
-wifi_ap_ssid: "Mesh"
-wifi_ap_channel: 1
-wifi_bridge: br0
-wifi_bridge_ip: 10.10.10.1
-wifi_dhcp_range_start: 10.10.10.10
-wifi_dhcp_range_end: 10.10.10.200
-wifi_netmask: 255.255.255.0
+- name: Restart dnsmasq
+  systemd:
+    name: dnsmasq
+    state: restarted

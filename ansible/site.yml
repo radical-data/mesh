@@ -16,3 +16,4 @@
         when: "'access_point_nodes' in group_names",
         tags: ["ap"],
       }
+    - { role: yggdrasil, tags: ["yggdrasil"] }

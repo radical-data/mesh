@@ -1,0 +1,15 @@
+[Unit]
+Description=Bring up AP bridge
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/test -e /sys/class/net/{{ wifi_ap_interface }}
+ExecStart=/usr/local/sbin/bridge-ap.sh
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
