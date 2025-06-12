@@ -1,5 +1,5 @@
 wifi_ap_interface: wlan1
-wifi_ap_ssid: "MeshAccess"
+wifi_ap_ssid: "Mesh"
 wifi_ap_channel: 1
 wifi_bridge: br0
 wifi_bridge_ip: 10.10.10.1
