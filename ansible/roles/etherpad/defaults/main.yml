@@ -1,8 +1,16 @@
 etherpad_port: 9001
-etherpad_admin_password: admin
-etherpad_default_pad_text: "Welcome to Etherpad!"
+etherpad_admin_password: O4%Q2m2DaGuuf
+etherpad_default_pad_text: |
+  👋 Welcome to MeshPad!\n\n
 
-# Postgres config needed to connect
+  This is a shared public document for the mesh network.\n\n
+
+  - Type to co-create with others nearby\n
+  - Create new pads by changing the URL (e.g. /my-note)\n
+  - Find existing pads by looking at 'All Pads' on the homepage\n\n
+
+  🌐 We're offline, but together.
+
 postgres_container_name: postgres
 postgres_db: etherpad
 postgres_user: admin
