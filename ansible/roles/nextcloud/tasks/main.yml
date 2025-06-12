@@ -1,0 +1,29 @@
+- name: Ensure Docker is installed
+  include_role:
+    name: docker
+  when: install_docker | default(true)
+
+- name: Create persistent volume for Nextcloud
+  docker_volume:
+    name: "{{ nextcloud_volume }}"
+
+- name: Run Nextcloud container
+  docker_container:
+    name: "{{ nextcloud_container_name }}"
+    image: "{{ nextcloud_image }}"
+    restart_policy: unless-stopped
+    ports:
+      - "{{ nextcloud_http_port }}:80"
+    volumes:
+      - "{{ nextcloud_volume }}:/var/www/html"
+    env:
+      NEXTCLOUD_ADMIN_USER: "{{ nextcloud_admin_user }}"
+      NEXTCLOUD_ADMIN_PASSWORD: "{{ nextcloud_admin_password }}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ nextcloud_trusted_domains }}"
+
+- name: Register Nextcloud in Avahi
+  template:
+    src: avahi/nextcloud.service.j2
+    dest: /etc/avahi/services/nextcloud.service
+    mode: "0644"
+  notify: Restart avahi
