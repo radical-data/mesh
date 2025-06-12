@@ -1,0 +1,16 @@
+[Unit]
+Description=Start mesh networking on boot
+After=multi-user.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mesh-init.sh
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=0
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
