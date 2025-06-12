@@ -89,10 +89,11 @@
     dest: /etc/systemd/system/mesh-startup.service
     mode: "0644"
 
-- name: Enable mesh-startup service
+- name: Enable and start mesh-startup service
   systemd:
     name: mesh-startup.service
     enabled: yes
+    state: started
     daemon_reload: yes
 
 - name: Write systemd unit file to bring up eth0 with DHCP
