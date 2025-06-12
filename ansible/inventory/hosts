@@ -1,6 +1,8 @@
 [mesh_nodes]
 node0.local
 node1.local
+node2.local
+node3.local
 
 [service_nodes]
 node0.local
