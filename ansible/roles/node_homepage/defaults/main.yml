@@ -1,0 +1,2 @@
+mesh_home_build_dir: "{{ playbook_dir }}/../mesh-home/build"
+mesh_home_use_nginx: true
