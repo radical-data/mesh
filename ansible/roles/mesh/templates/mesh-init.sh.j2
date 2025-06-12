@@ -1,0 +1,30 @@
+#!/bin/bash
+set -euo pipefail
+
+# Bring down wlan0 just in case
+ip link set wlan0 down || true
+
+# Set wlan0 to IBSS mode
+iw wlan0 set type ibss
+
+# Unblock Wi-Fi radios
+rfkill unblock all
+
+# Bring it back up
+ip link set wlan0 up
+
+# Join mesh network
+iw wlan0 ibss join {{ mesh_ssid }} {{ (mesh_channel | int) * 5 + 2407 }}
+
+# Load batman-adv and join mesh
+modprobe batman-adv
+batctl if add wlan0
+ip link set up dev bat0
+
+# Assign mesh IP
+ip addr flush dev bat0
+ip addr add {{ mesh_ip }}/24 dev bat0
+
+# Disable conflicting services
+systemctl disable --now wpa_supplicant || true
+systemctl disable --now NetworkManager || true

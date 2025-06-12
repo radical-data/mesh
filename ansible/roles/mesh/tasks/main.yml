@@ -77,6 +77,12 @@
   debug:
     var: ip_report.stdout_lines
 
+- name: Write mesh init script
+  template:
+    src: mesh-init.sh.j2
+    dest: /usr/local/sbin/mesh-init.sh
+    mode: '0755'
+
 - name: Write systemd unit file for mesh startup
   template:
     src: mesh-startup.service.j2
