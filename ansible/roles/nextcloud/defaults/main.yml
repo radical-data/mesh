@@ -1,0 +1,7 @@
+nextcloud_admin_user: admin
+nextcloud_admin_password: admin123
+nextcloud_http_port: 8080
+nextcloud_container_name: nextcloud
+nextcloud_volume: nextcloud_data
+nextcloud_image: nextcloud:28-apache
+nextcloud_trusted_domains: "{{ ansible_hostname }}.local"

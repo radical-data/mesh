@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">Shared Archive on {{ ansible_hostname }}</name>
+  <service>
+    <name replace-wildcards="yes">Nextcloud on {{ ansible_hostname }}</name>
+    <type>_http._tcp</type>
+    <port>{{ nextcloud_http_port }}</port>
+    <txt-record>path=/</txt-record>
+  </service>
+</service-group>
