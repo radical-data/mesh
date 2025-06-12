@@ -1,0 +1,77 @@
+- name: Install APT HTTPS transport and dirmngr
+  apt:
+    name:
+      - apt-transport-https
+      - dirmngr
+    state: present
+    update_cache: yes
+
+- name: Ensure apt keyring directory exists
+  file:
+    path: /usr/local/apt-keys
+    state: directory
+    mode: "0755"
+
+- name: Fetch Yggdrasil GPG key
+  command: gpg --fetch-keys https://neilalexander.s3.dualstack.eu-west-2.amazonaws.com/deb/key.txt
+  args:
+    creates: /usr/local/apt-keys/yggdrasil-keyring.gpg
+
+- name: Export Yggdrasil key to apt keyring
+  shell: gpg --export BC1BF63BD10B8F1A > /usr/local/apt-keys/yggdrasil-keyring.gpg
+  args:
+    creates: /usr/local/apt-keys/yggdrasil-keyring.gpg
+
+- name: Add Yggdrasil APT repo
+  copy:
+    dest: /etc/apt/sources.list.d/yggdrasil.list
+    content: |
+      deb [signed-by=/usr/local/apt-keys/yggdrasil-keyring.gpg] https://neilalexander.s3.dualstack.eu-west-2.amazonaws.com/deb/ debian yggdrasil
+    mode: "0644"
+
+- name: Install Yggdrasil
+  apt:
+    name: yggdrasil
+    state: latest
+    update_cache: yes
+
+- name: Ensure Yggdrasil config directory exists
+  file:
+    path: /etc/yggdrasil
+    state: directory
+    mode: "0755"
+
+- name: Generate valid base Yggdrasil config (JSON)
+  command: yggdrasil -normaliseconf -genconf -json
+  register: ygg_baseconf
+  changed_when: false
+
+- name: Write patched Yggdrasil config
+  copy:
+    content: |
+      {{ ygg_baseconf.stdout | from_json
+         | combine({
+             "AdminListen": "unix:///var/run/yggdrasil/yggdrasil.sock",
+             "IfName": "ygg0"
+           }, recursive=True)
+         | to_nice_json }}
+    dest: /etc/yggdrasil/yggdrasil.conf
+    mode: "0644"
+  notify: Restart Yggdrasil
+
+- name: Enable and start Yggdrasil
+  systemd:
+    name: yggdrasil
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Get Yggdrasil IPv6 address
+  command: yggdrasilctl getSelf
+  register: ygg_self
+  changed_when: false
+  failed_when: false
+
+- name: Show Yggdrasil self address
+  debug:
+    var: ygg_self.stdout_lines
