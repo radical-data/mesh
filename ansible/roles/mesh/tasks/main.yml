@@ -20,23 +20,29 @@
     - name: Set wlan0 to ibss mode
       command: iw wlan0 set type ibss
 
+    - name: Unblock Wi-Fi radios
+      become: yes
+      command: rfkill unblock all
+
     - name: Bring up wlan0
       command: ip link set wlan0 up
 
-    - name: Join wlan0 to mesh-net
-      shell: |
-        iw dev wlan0 info | grep -q "ssid {{ mesh_ssid }}" || \
+    - name: Force wlan0 to join mesh IBSS network
+      become: yes
+      command: >
         iw wlan0 ibss join {{ mesh_ssid }} {{ (mesh_channel | int) * 5 + 2407 }}
-      changed_when: false
+      register: join_result
+      changed_when: true
 
 - name: Load batman-adv kernel module
   modprobe:
     name: batman-adv
     state: present
 
-- name: Add wlan0 to batman-adv
-  command: batctl if add wlan0
-  ignore_errors: true
+- name: Ensure wlan0 is added to batman-adv
+  shell: |
+    batctl if | grep -q "^wlan0: active" || batctl if add wlan0
+  changed_when: false
 
 - name: Bring up bat0
   command: ip link set up dev bat0
