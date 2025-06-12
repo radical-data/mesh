@@ -4,5 +4,5 @@ wifi_ap_channel: 1
 wifi_bridge: br0
 wifi_bridge_ip: 10.10.10.1
 wifi_dhcp_range_start: 10.10.10.10
-wifi_dhcp_range_end: 10.10.10.50
-wifi_netmask: 255.255.255.0
+wifi_dhcp_range_end: 10.10.11.254
+wifi_netmask: 255.255.254.0
