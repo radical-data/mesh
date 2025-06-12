@@ -20,6 +20,19 @@
   vars:
     postgres_network: etherpad_net
 
+- name: Ensure Etherpad config directory exists
+  file:
+    path: /etc/etherpad
+    state: directory
+    mode: "0755"
+
+- name: Write custom Etherpad settings.json
+  template:
+    src: settings.json.j2
+    dest: /etc/etherpad/settings.json
+    mode: "0644"
+  tags: [etherpad, config]
+
 - name: Run Etherpad container
   docker_container:
     name: etherpad
@@ -28,17 +41,9 @@
     restart_policy: always
     ports:
       - "{{ etherpad_port | default(9001) }}:9001"
-    env:
-      ADMIN_PASSWORD: "{{ etherpad_admin_password }}"
-      DEFAULT_PAD_TEXT: "{{ etherpad_default_pad_text }}"
-      DB_TYPE: "postgres"
-      DB_HOST: "{{ postgres_container_name }}"
-      DB_PORT: "5432"
-      DB_NAME: "{{ postgres_db }}"
-      DB_USER: "{{ postgres_user }}"
-      DB_PASS: "{{ postgres_password }}"
     volumes:
       - etherpad_var:/opt/etherpad-lite/var
+      - /etc/etherpad/settings.json:/opt/etherpad-lite/settings.json:ro
     networks:
       - name: etherpad_net
     recreate: yes

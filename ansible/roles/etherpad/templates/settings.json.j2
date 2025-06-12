@@ -1,0 +1,59 @@
+{
+  "title": "📝 MeshPad",
+  "ip": "0.0.0.0",
+  "port": {{ etherpad_port | default(9001) }},
+  "skinName": "colibris",
+  "skinVariants": "light-toolbar light-editor light-background full-width-editor",
+
+  "authenticationMethod": "apikey",
+  "requireAuthentication": false,
+  "requireAuthorization": false,
+  "editOnly": false,
+  "requireSession": false,
+
+  "users": {
+    "admin": {
+      "password": "{{ etherpad_admin_password }}",
+      "is_admin": true
+    },
+    "user": {
+      "password": "guest123",
+      "is_admin": false
+    }
+  },
+
+  "dbType": "postgres",
+  "dbSettings": {
+    "host": "{{ postgres_container_name }}",
+    "port": 5432,
+    "database": "{{ postgres_db }}",
+    "user": "{{ postgres_user }}",
+    "password": "{{ postgres_password }}"
+  },
+
+  "defaultPadText": "{{ etherpad_default_pad_text }}",
+
+  "padOptions": {
+    "showControls": true,
+    "showChat": true,
+    "alwaysShowChat": true,
+    "chatAndUsers": true,
+    "noColors": false
+  },
+
+  "minify": true,
+  "maxAge": 3600,
+  "exposeVersion": false,
+  "loglevel": "INFO",
+  "logLayoutType": "colored",
+  "trustProxy": false,
+  "disableIPlogging": true,
+  "suppressErrorsInPadText": true,
+
+  "socketTransportProtocols": ["websocket", "polling"],
+  "socketIo": {
+    "maxHttpBufferSize": 50000
+  },
+
+  "loadTest": false
+}
