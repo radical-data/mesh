@@ -32,9 +32,9 @@
     state: absent
   notify: Reload nginx
 
-- name: Copy Avahi export script
-  copy:
-    src: export-avahi-services.sh
+- name: Write Avahi export script with mesh prefix
+  template:
+    src: export-avahi-services.sh.j2
     dest: /usr/local/bin/export-avahi-services.sh
     mode: "0755"
 
