@@ -61,13 +61,22 @@
 					target: entry.neigh_address
 				});
 			}
+
+			graphReady = true; // triggers afterUpdate
 		} catch (e) {
-			console.error(e);
+			console.error('Error loading mesh data:', e);
+		}
+	});
+
+	afterUpdate(() => {
+		if (graphReady && nodes.length > 0 && links.length > 0) {
+			drawGraph(nodes, links);
+			graphReady = false; // reset to avoid redundant redraws
 		}
 	});
 </script>
 
-<h1>Mesh</h1>
+<h1>Mesh Overview</h1>
 
 <h2>Discovered Services</h2>
 {#if services.length === 0}
@@ -78,7 +87,7 @@
 			<li>
 				<strong>{svc.name}</strong><br />
 				<span>{svc.ip}:{svc.port}</span><br />
-				<a href={'http://' + svc.ip + ':' + svc.port}>Open</a>
+				<a href={'http://' + svc.ip + ':' + svc.port} target="_blank">Open</a>
 			</li>
 		{/each}
 	</ul>
@@ -88,6 +97,7 @@
 {#if nodes.length === 0}
 	<p>No mesh data found.</p>
 {:else}
+	<svg id="mesh-graph" width="600" height="400"></svg>
 	<h3>Nodes</h3>
 	<ul>
 		{#each nodes as node}

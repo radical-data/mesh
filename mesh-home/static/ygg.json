@@ -1,0 +1,55 @@
+{
+    "self": {
+        "build_name": "yggdrasil",
+        "build_version": "0.5.12",
+        "key": "b4951688c2ee1c9b420c37b0a53f8b1a4a861b921c6278cfea218b7ab2bb8f7b",
+        "address": "200:96d5:d2ee:7a23:c6c9:7be7:909e:b580",
+        "routing_entries": 3,
+        "subnet": "300:96d5:d2ee:7a23::/64"
+    },
+    "peers": [
+        {
+            "remote": "tls://[fe80::8aa2:9eff:fe07:4ac%25wlan0]:42377",
+            "up": true,
+            "inbound": false,
+            "address": "201:1e81:2b21:22b8:fdcf:c021:5595:e4a1",
+            "key": "785fb537b751c08c0ff7aa9a86d7b625dc439b5fcf432a52cc55c2e63a313ede",
+            "port": 2,
+            "priority": 0,
+            "cost": 54,
+            "bytes_recvd": 694,
+            "bytes_sent": 772,
+            "uptime": 5.9772190609999996,
+            "latency": 29820000
+        },
+        {
+            "remote": "tls://[fe80::dea6:32ff:fe35:ac7c%25wlan0]:37053",
+            "up": true,
+            "inbound": false,
+            "address": "200:4b2e:6706:208f:57b6:baa4:908:9773",
+            "key": "da68cc7cefb85424a2adfb7bb44631b82625c42bce9ee6a2d7f5ffbc42a81a81",
+            "port": 1,
+            "priority": 0,
+            "cost": 20,
+            "bytes_recvd": 2661,
+            "bytes_sent": 2456,
+            "uptime": 1091.169797395,
+            "latency": 18180000
+        },
+        {
+            "remote": "tls://[fe80::dea6:32ff:fe35:ac7c%25wlan0]:54877",
+            "up": true,
+            "inbound": true,
+            "address": "200:4b2e:6706:208f:57b6:baa4:908:9773",
+            "key": "da68cc7cefb85424a2adfb7bb44631b82625c42bce9ee6a2d7f5ffbc42a81a81",
+            "port": 1,
+            "priority": 0,
+            "cost": 9,
+            "bytes_recvd": 3085,
+            "bytes_sent": 2597,
+            "uptime": 1095.164249308,
+            "latency": 10340000
+        }
+    ],
+    "paths": []
+}

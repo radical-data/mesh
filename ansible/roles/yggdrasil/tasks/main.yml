@@ -1,6 +1,7 @@
-- name: Install APT HTTPS transport and dirmngr
+- name: Install required tools for Yggdrasil export
   apt:
     name:
+      - jq
       - apt-transport-https
       - dirmngr
     state: present
@@ -75,3 +76,19 @@
 - name: Show Yggdrasil self address
   debug:
     var: ygg_self.stdout_lines
+
+- name: Copy Yggdrasil topology export script
+  copy:
+    src: export-ygg-topology.sh
+    dest: /usr/local/bin/export-ygg-topology.sh
+    mode: "0755"
+
+- name: Ensure ygg.json is exported immediately
+  command: /usr/local/bin/export-ygg-topology.sh
+
+- name: Add cron job to refresh ygg.json
+  cron:
+    name: "Export Yggdrasil mesh topology"
+    user: root
+    job: "/usr/local/bin/export-ygg-topology.sh"
+    minute: "*/1"
