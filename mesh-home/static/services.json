@@ -1,0 +1,26 @@
+[
+    {
+        "host": "node0.local",
+        "ip": "192.168.77.9",
+        "port": 9001,
+        "name": "Etherpad on node0"
+    },
+    {
+        "host": "node0.local",
+        "ip": "192.168.1.74",
+        "port": 9001,
+        "name": "Etherpad on node0"
+    },
+    {
+        "host": "node1.local",
+        "ip": "192.168.1.39",
+        "port": 9001,
+        "name": "Etherpad on node1"
+    },
+    {
+        "host": "node1.local",
+        "ip": "192.168.77.124",
+        "port": 9001,
+        "name": "Etherpad on node1"
+    }
+]
