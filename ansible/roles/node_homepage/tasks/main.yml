@@ -1,0 +1,59 @@
+- name: Install HTTP server (if serving static)
+  apt:
+    name: nginx
+    state: present
+  when: mesh_home_use_nginx | default(true)
+
+- name: Copy mesh-home build files
+  copy:
+    src: "{{ mesh_home_build_dir }}/"
+    dest: /var/www/mesh-home/
+    mode: "0755"
+    owner: www-data
+    group: www-data
+  notify: Reload nginx
+
+- name: Deploy nginx config for mesh-home
+  template:
+    src: mesh-home.conf.j2
+    dest: /etc/nginx/sites-available/mesh-home
+  notify: Reload nginx
+
+- name: Enable mesh-home site
+  file:
+    src: /etc/nginx/sites-available/mesh-home
+    dest: /etc/nginx/sites-enabled/mesh-home
+    state: link
+  notify: Reload nginx
+
+- name: Disable default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Copy Avahi export script
+  copy:
+    src: export-avahi-services.sh
+    dest: /usr/local/bin/export-avahi-services.sh
+    mode: "0755"
+
+- name: Set up cron job to update services.json
+  cron:
+    name: "Export Avahi services to JSON"
+    user: root
+    job: "/usr/local/bin/export-avahi-services.sh"
+    minute: "*/1"
+
+- name: Copy mesh topology export script
+  copy:
+    src: export-mesh-topology.sh
+    dest: /usr/local/bin/export-mesh-topology.sh
+    mode: "0755"
+
+- name: Cron job to export mesh topology
+  cron:
+    name: "Export mesh topology to neighbours.json"
+    user: root
+    job: "/usr/local/bin/export-mesh-topology.sh"
+    minute: "*/1"

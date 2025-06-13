@@ -1,0 +1,11 @@
+[
+    {
+        "hard_ifindex": 3,
+        "hard_ifname": "wlan0",
+        "orig_address": "dc:a6:32:35:ac:7c",
+        "best": true,
+        "last_seen_msecs": 188,
+        "neigh_address": "dc:a6:32:35:ac:7c",
+        "tq": 255
+    }
+]
