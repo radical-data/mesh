@@ -1,7 +1,8 @@
 #!/bin/bash
 OUT="/var/www/mesh-home/services.json"
+MESH_PREFIX="{{ mesh_ip_prefix }}."
 
-avahi-browse -rtp _http._tcp | awk -F';' '
+avahi-browse -rtp _http._tcp | awk -F';' -v prefix="$MESH_PREFIX" '
 $1 == "=" {
   iface = $2
   proto = $3
@@ -12,8 +13,7 @@ $1 == "=" {
   ip = $8
   port = $9
 
-  # Only include IPv4 mesh-relevant addresses
-  if (ip ~ /^127\.|^172\.|^fe80::/ || iface ~ /^(lo|docker|br-|veth)/) next
+  if (ip !~ "^" prefix) next
 
   gsub(/\\032/, " ", name)
   gsub(/"/, "\\\"", name)
